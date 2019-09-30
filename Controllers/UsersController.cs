@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using webapinetcorebase.Models;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace webapinetcorebase.Controllers
 {
@@ -27,14 +29,61 @@ namespace webapinetcorebase.Controllers
 
         // GET: api/Users
         [HttpGet]
-        public ActionResult<IQueryable<ApplicationUserBasicData>> Get()
+        public async Task<ActionResult<IQueryable<ApplicationUserBasicData>>> Get()
         {
-            return Ok(_userManager.Users.Select(item => new ApplicationUserBasicData{
-                Id = item.Id,
-                UserName = item.UserName,
-                Email = item.Email,
-                PhoneNumber = item.PhoneNumber
-            }).ToList());
+
+            var userList = await (from user in _userManager.Users
+								  select new
+								  {
+									  UserId = user.Id,
+									  Username = user.UserName,
+									  user.Email,
+									  user.PhoneNumber,
+									  RoleNames = (from userRole in user.Roles //[AspNetUserRoles]
+												   join role in _roleManager.Roles //[AspNetRoles]//
+												   on userRole.RoleId
+												   equals role.Id
+												   select role.Name).ToList()
+								  }).ToListAsync();
+
+            var finalList = userList.Select( u => new ApplicationUserBasicData{
+                Id = u.UserId,
+                UserName = u.Username,
+                Email = u.Email,
+                PhoneNumber = u.PhoneNumber,
+                Roles = string.Join(",", u.RoleNames),
+            });
+
+            return Ok(finalList);
+
+            // return Ok(_userManager.Users.Select(user => new ApplicationUserBasicData
+            // {
+            //     Id = user.Id,
+            //     UserName = user.UserName,
+            //     Email = user.Email,
+            //     PhoneNumber = user.PhoneNumber
+            // }).ToList());
+
+
+
+        }
+
+        // GET: api/Users/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<ApplicationUserBasicData>> Get(string id)
+        {
+            ApplicationUser user = await _userManager.FindByIdAsync(id);
+
+           // var id2 = user.Select(d => d.Id);
+
+            // ApplicationUserBasicData s = user.Select(item => new ApplicationUserBasicData{
+            //     Id = item.Id,
+            //     UserName = item.UserName,
+            //     Email = item.Email,
+            //     PhoneNumber = item.PhoneNumber
+            // });
+            return Ok(user);
+
         }
     }
 }
