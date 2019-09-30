@@ -1,17 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.Swagger;
+using webapinetcorebase.DataContext;
+using webapinetcorebase.Models;
 
 namespace webapinetcorebase
 {
@@ -27,8 +33,30 @@ namespace webapinetcorebase
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddDbContext<ApplicationDBContext>(option => option.UseSqlServer(Configuration.GetConnectionString("Default")));
+            services.AddIdentity<ApplicationUser, IdentityRole>()
+                           .AddEntityFrameworkStores<ApplicationDBContext>()
+                           .AddDefaultTokenProviders();
+
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                         .AddJwtBearer(options =>
+                         options.TokenValidationParameters = new TokenValidationParameters
+                         {
+                             ValidateIssuer = true,
+                             ValidateAudience = true,
+                             ValidateLifetime = true,
+                             ValidIssuer = "yourdomain.com",//esto va en un archivo de configuracion
+                             ValidAudience = "yourdomain.com",
+                             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Super_Secret_Key"])),
+                             ClockSkew = TimeSpan.Zero
+                         });
+
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
             services.AddMvc().AddJsonOptions(ConfigureJSON);
+
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new Info { Title = "You api title", Version = "v1" });
@@ -62,8 +90,10 @@ namespace webapinetcorebase
                 app.UseHsts();
             }
 
+            app.UseAuthentication();
+
             app.UseHttpsRedirection();
-             app.UseSwagger();
+            app.UseSwagger();
 
             // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), 
             // specifying the Swagger JSON endpoint.
@@ -72,6 +102,7 @@ namespace webapinetcorebase
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "EFExample API V1");
                 c.RoutePrefix = string.Empty;
             });
+
             app.UseMvc();
         }
     }
