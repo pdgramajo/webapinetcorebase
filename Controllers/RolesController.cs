@@ -10,7 +10,7 @@ namespace webapinetcorebase.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-   // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class RolesController : ControllerBase
     {
         private readonly RoleManager<IdentityRole> _roleManager;
@@ -96,7 +96,7 @@ namespace webapinetcorebase.Controllers
                 return BadRequest("error al editar el rol");
             }
         }
-        
+
         [HttpDelete("{id}")]
         public async Task<ActionResult<IdentityRole>> Delete(string id)
         {
