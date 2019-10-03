@@ -78,32 +78,33 @@ namespace webapinetcorebase.Controllers
         [HttpPost("{id}/Role")]
         public async Task<ActionResult> AddRole(string id, [FromBody] RoleId role)
         {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var rol = await _roleManager.FindByIdAsync(role.Id);
+                    var user = await _userManager.FindByIdAsync(id);
+                    var result = await _userManager.AddToRoleAsync(user, rol.Name);
+                    if (result.Succeeded)
+                    {
+                        return Ok();
+                    }
+                    else
+                    {
+                        return BadRequest();
+                    }
 
-            if (string.IsNullOrEmpty(role.Id))
-            {
-                return BadRequest("the roleId is required");
-            }
-            try
-            {
-                var rol = await _roleManager.FindByIdAsync(role.Id);
-                var user = await _userManager.FindByIdAsync(id);
-                var result = await _userManager.AddToRoleAsync(user, rol.Name);
-                if (result.Succeeded)
-                {
-                    return Ok();
                 }
-                else
+                catch (System.Exception)
                 {
+
                     return BadRequest();
                 }
-
             }
-            catch (System.Exception)
+            else
             {
-
-                return BadRequest();
+                return BadRequest(ModelState);
             }
-
         }
 
     }
