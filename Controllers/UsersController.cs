@@ -1,3 +1,5 @@
+using Microsoft.Win32.SafeHandles;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Linq;
@@ -29,45 +31,20 @@ namespace webapinetcorebase.Controllers
 
         // GET: api/Users
         [HttpGet]
-        //public async Task<ActionResult<IQueryable<ApplicationUserBasicData>>> Get()
-        public async Task<ActionResult<dynamic>> Get()
+        public async Task<ActionResult<IQueryable<ApplicationUserBasicData>>> Get()
         {
-
-            // var userList = await (from user in _userManager.Users
-            //                       select new
-            //                       {
-            //                           UserId = user.Id,
-            //                           Username = user.UserName,
-            //                           user.Email,
-            //                           user.PhoneNumber,
-            //                           RoleNames = (from userRole in user.Roles //[AspNetUserRoles]
-            //                                        join role in _roleManager.Roles //[AspNetRoles]//
-            //                                        on userRole.RoleId
-            //                                        equals role.Id
-            //                                        select role.Name).ToList()
-            //                       }).ToListAsync();
-
-            var users = await _userManager.Users.Select(user => new
+            var users = await _userManager.Users.Select(user => new ApplicationUserBasicData
             {
-                UserId = user.Id,
-                Username = user.UserName,
-                user.Email,
-                user.PhoneNumber,
-               RolesName = string.Join(",",user.Roles.Join(_roleManager.Roles,
+                Id = user.Id,
+                UserName = user.UserName,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                Roles = string.Join(",", user.Roles.Join(_roleManager.Roles,
                                             userRole => userRole.RoleId,
                                             role => role.Id,
-                                            (userRole,role) => role.Name
+                                            (userRole, role) => role.Name
                                             ).ToList())
             }).ToListAsync();
-
-            // var finalList = userList.Select(u => new ApplicationUserBasicData
-            // {
-            //     Id = u.UserId,
-            //     UserName = u.Username,
-            //     Email = u.Email,
-            //     PhoneNumber = u.PhoneNumber,
-            //     Roles = string.Join(",", u.RoleNames),
-            // });
 
             return Ok(users);
         }
@@ -81,20 +58,62 @@ namespace webapinetcorebase.Controllers
             {
                 return NotFound();
             }
-            
-            var userData = await _userManager.Users.Where(user => user.Id == id).Select(user => new ApplicationUserBasicData{
+
+            var userData = await _userManager.Users.Where(user => user.Id == id).Select(user => new ApplicationUserBasicData
+            {
                 Id = user.Id,
                 UserName = user.UserName,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
-                Roles = string.Join(',',user.Roles.Join(_roleManager.Roles,
+                Roles = string.Join(',', user.Roles.Join(_roleManager.Roles,
                                             userRole => userRole.RoleId,
                                             role => role.Id,
-                                            (userRole,role) => role.Name
+                                            (userRole, role) => role.Name
                                             ).ToList())
             }).FirstOrDefaultAsync();
-            
-            return Ok(userData);      
+
+            return Ok(userData);
         }
+
+        /*
+
+         if (!string.IsNullOrEmpty(model.RoleId))
+                        {
+                            var role = await _roleManager.FindByIdAsync(model.RoleId);
+
+                            await _userManager.AddToRoleAsync(user, role.Name);
+                        }
+         */
+        [HttpPost("{id}/Role")]
+        public async Task<ActionResult> AddRole(string id, [FromBody] RoleId role)
+        {
+
+            if (string.IsNullOrEmpty(role.Id))
+            {
+                return BadRequest("the roleId is required");
+            }
+            try
+            {
+                var rol = await _roleManager.FindByIdAsync(role.Id);
+                var user = await _userManager.FindByIdAsync(id);
+                var result = await _userManager.AddToRoleAsync(user, rol.Name);
+                if (result.Succeeded)
+                {
+                    return Ok();
+                }
+                else
+                {
+                    return BadRequest();
+                }
+
+            }
+            catch (System.Exception)
+            {
+
+                return BadRequest();
+            }
+
+        }
+
     }
 }

@@ -69,13 +69,13 @@ namespace webapinetcorebase.Controllers
 
         // PUT: api/Role/5
         [HttpPut("{id}")]
-        public async Task<ActionResult<IdentityRole>> Put(string id, [FromBody] string roleName)
+        public async Task<ActionResult<IdentityRole>> Put(string id, [FromBody] RoleInfo roleInfo)
         {
-            if (string.IsNullOrEmpty(roleName) || string.IsNullOrEmpty(id))
+            if (string.IsNullOrEmpty(roleInfo.Name) || string.IsNullOrEmpty(id))
             {
                 return BadRequest();
             }
-            bool exist = await _roleManager.RoleExistsAsync(roleName);
+            bool exist = await _roleManager.RoleExistsAsync(roleInfo.Name);
 
             if (exist)
             {
@@ -83,7 +83,7 @@ namespace webapinetcorebase.Controllers
             }
 
             var rol = await _roleManager.FindByIdAsync(id);
-            rol.Name = roleName;
+            rol.Name = roleInfo.Name;
 
             var result = await _roleManager.UpdateAsync(rol);
 
