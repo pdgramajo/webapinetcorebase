@@ -7,6 +7,7 @@ dotnet ef migrations add InitialCreate
 
 dotnet ef database update
 ```
+link to learn migrations: `https://docs.microsoft.com/en-us/ef/core/managing-schemas/migrations/`
 
 crear una carpeta Properties
 y crear un archivo launchSettings.json
