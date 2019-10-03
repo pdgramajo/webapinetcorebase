@@ -75,15 +75,6 @@ namespace webapinetcorebase.Controllers
             return Ok(userData);
         }
 
-        /*
-
-         if (!string.IsNullOrEmpty(model.RoleId))
-                        {
-                            var role = await _roleManager.FindByIdAsync(model.RoleId);
-
-                            await _userManager.AddToRoleAsync(user, role.Name);
-                        }
-         */
         [HttpPost("{id}/Role")]
         public async Task<ActionResult> AddRole(string id, [FromBody] RoleId role)
         {
